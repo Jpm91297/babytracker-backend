@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { Sequelize } from 'sequelize';
 
+// Fetch Environment Var, throw err if not present
 function requireEnv(name) {
     const value = process.env[name];
     if (!value) throw new Error(`Missing required env var ${name} (see .env.example)`);

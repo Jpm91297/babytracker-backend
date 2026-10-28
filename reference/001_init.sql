@@ -61,21 +61,18 @@ CREATE TABLE Events (
   Id            uniqueidentifier NOT NULL CONSTRAINT PK_Events PRIMARY KEY DEFAULT NEWSEQUENTIALID(),
   ChildId       uniqueidentifier NOT NULL CONSTRAINT FK_Events_ChildId REFERENCES Children(Id) ON DELETE CASCADE,
   Type          nvarchar(50)     NOT NULL CONSTRAINT FK_Events_Type REFERENCES EventTypes(Name),
-  SchemaVersion smallint         NOT NULL DEFAULT 1,
   StartedAt     datetime2(3)     NOT NULL,
   EndedAt       datetime2(3)     NULL,       -- NULL = instant event, or timer still running
   Details       nvarchar(max)    NOT NULL DEFAULT '{}' CONSTRAINT CK_Events_DetailsJson CHECK (ISJSON(Details) = 1),
   Notes         nvarchar(500)    NULL,
-  LoggedBy      uniqueidentifier NOT NULL CONSTRAINT FK_Events_LoggedBy  REFERENCES Users(Id),
-  UpdatedBy     uniqueidentifier NULL     CONSTRAINT FK_Events_UpdatedBy REFERENCES Users(Id),
+  LoggedBy      uniqueidentifier NOT NULL CONSTRAINT FK_Events_LoggedBy REFERENCES Users(Id),
   CreatedAt     datetime2(3)     NOT NULL DEFAULT SYSUTCDATETIME(),
   UpdatedAt     datetime2(3)     NOT NULL DEFAULT SYSUTCDATETIME(),
-  DeletedAt     datetime2(3)     NULL,       -- soft delete
   CONSTRAINT CK_Events_Time CHECK (EndedAt IS NULL OR EndedAt >= StartedAt)
 );
 
--- Timeline: newest first per child, ignoring deleted rows
-CREATE INDEX IX_Events_Timeline  ON Events (ChildId, StartedAt DESC) WHERE DeletedAt IS NULL;
+-- Timeline: newest first per child
+CREATE INDEX IX_Events_Timeline  ON Events (ChildId, StartedAt DESC);
 
 -- "Last feeding" / "last diaper" per child
-CREATE INDEX IX_Events_ChildType ON Events (ChildId, Type, StartedAt DESC) WHERE DeletedAt IS NULL;
+CREATE INDEX IX_Events_ChildType ON Events (ChildId, Type, StartedAt DESC);

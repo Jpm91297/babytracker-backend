@@ -23,6 +23,5 @@ Children.hasMany(Events, { foreignKey: 'ChildId', as: 'events', onDelete: 'CASCA
 Events.belongsTo(Children, { foreignKey: 'ChildId', as: 'child', onDelete: 'CASCADE' });
 
 Events.belongsTo(Users, { foreignKey: 'LoggedBy', as: 'loggedByUser', onDelete: 'NO ACTION' });
-Events.belongsTo(Users, { foreignKey: 'UpdatedBy', as: 'updatedByUser', onDelete: 'NO ACTION' });
 
 export { Children, ChildCaregivers, Events, EventTypes, Invites, Users };
