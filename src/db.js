@@ -26,6 +26,11 @@ export const sequelize = new Sequelize(requireEnv('DB_NAME'), requireEnv('DB_USE
     logging: false,
 });
 
+// Sequelize formats SQL `date` columns in the server's timezone, which reads them a day early west of UTC
+sequelize.connectionManager.refreshTypeParser({
+    DATEONLY: { types: { mssql: [40] }, parse: (value) => value.toISOString().slice(0, 10) },
+});
+
 export async function connectDb() {
     try {
         await sequelize.authenticate();
