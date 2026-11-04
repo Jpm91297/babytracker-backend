@@ -91,6 +91,63 @@ Returns `201 { child }`:
 |---|---|
 | `400` | The name is missing or too long, or the birth date is invalid |
 
+### `GET /children/:id` (auth)
+
+Returns `200 { child }`, in the same shape as `POST /children`.
+
+| Status | When |
+|---|---|
+| `404` | The child doesn't exist, or the user has no access to it |
+
+## Events
+
+Any caregiver of a child can read and log its events. Every route below returns `404` if the child doesn't exist or the user has no access to it.
+
+**`event`**
+
+```json
+{
+  "id": "uuid",
+  "type": "feeding",
+  "startedAt": "2026-10-31T14:05:00.000Z",
+  "details": { "method": "bottle", "amountMl": 90, "contents": "formula" },
+  "notes": null,
+  "loggedBy": { "id": "uuid", "name": "Sam" }
+}
+```
+
+**`details`** depends on `type`:
+
+| Type | Details |
+|---|---|
+| `feeding` (breast) | `{ method: "breast", leftSec, rightSec }`. |
+| `feeding` (bottle) | `{ method: "bottle", amountMl, contents }`. `contents` is `breast_milk` or `formula`. |
+| `diaper` | `{ type }`. `type` is `wet`, `dirty`, `mixed` or `dry`. |
+
+### `GET /children/:id/summary` (auth)
+
+The latest events, for the timeline tiles. Each field is `null` until an event of that type is logged.
+
+```json
+{ "lastFeeding": { "...": "event" }, "lastDiaper": null }
+```
+
+### `GET /children/:id/events` (auth)
+
+Lists all of the child's events, newest first.
+
+Returns `200 { events }`.
+
+### `POST /children/:id/events` (auth)
+
+Body: `{ type, startedAt, details, notes }`. `notes` is optional and at most 500 characters.
+
+Returns `201 { event }`, logged by the current user.
+
+| Status | When |
+|---|---|
+| `400` | The type is unknown, the start time is invalid, or the details or notes are invalid |
+
 ## Invites
 
 Codes are 8 characters, single use, and expire after 48 hours.

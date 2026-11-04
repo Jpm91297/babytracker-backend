@@ -62,13 +62,11 @@ CREATE TABLE Events (
   ChildId       uniqueidentifier NOT NULL CONSTRAINT FK_Events_ChildId REFERENCES Children(Id) ON DELETE CASCADE,
   Type          nvarchar(50)     NOT NULL CONSTRAINT FK_Events_Type REFERENCES EventTypes(Name),
   StartedAt     datetime2(3)     NOT NULL,
-  EndedAt       datetime2(3)     NULL,       -- NULL = instant event, or timer still running
   Details       nvarchar(max)    NOT NULL DEFAULT '{}' CONSTRAINT CK_Events_DetailsJson CHECK (ISJSON(Details) = 1),
   Notes         nvarchar(500)    NULL,
   LoggedBy      uniqueidentifier NOT NULL CONSTRAINT FK_Events_LoggedBy REFERENCES Users(Id),
   CreatedAt     datetime2(3)     NOT NULL DEFAULT SYSUTCDATETIME(),
-  UpdatedAt     datetime2(3)     NOT NULL DEFAULT SYSUTCDATETIME(),
-  CONSTRAINT CK_Events_Time CHECK (EndedAt IS NULL OR EndedAt >= StartedAt)
+  UpdatedAt     datetime2(3)     NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
 -- Timeline: newest first per child

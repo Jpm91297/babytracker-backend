@@ -6,7 +6,6 @@ export const Events = sequelize.define('Events', {
     ChildId: { type: DataTypes.UUID, allowNull: false },
     Type: { type: DataTypes.STRING(50), allowNull: false },
     StartedAt: { type: DataTypes.DATE, allowNull: false },
-    EndedAt: { type: DataTypes.DATE, allowNull: true },
     Details: {
         type: DataTypes.TEXT,
         allowNull: false,

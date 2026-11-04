@@ -1,0 +1,77 @@
+// DBML for dbdiagram.io, generated from 001_init.sql
+
+Table Users {
+  Id           uniqueidentifier [pk, default: `NEWSEQUENTIALID()`]
+  Name         nvarchar(100)    [not null]
+  Email        nvarchar(320)    [not null, unique, note: 'case-insensitive collation']
+  PasswordHash nvarchar(300)    [not null]
+  CreatedAt    datetime2(3)     [not null, default: `SYSUTCDATETIME()`]
+  UpdatedAt    datetime2(3)     [not null, default: `SYSUTCDATETIME()`]
+}
+
+Table Children {
+  Id        uniqueidentifier [pk, default: `NEWSEQUENTIALID()`]
+  Name      nvarchar(100)    [not null]
+  BirthDate date             [null]
+  CreatedBy uniqueidentifier [not null, ref: > Users.Id]
+  CreatedAt datetime2(3)     [not null, default: `SYSUTCDATETIME()`]
+  UpdatedAt datetime2(3)     [not null, default: `SYSUTCDATETIME()`]
+  DeletedAt datetime2(3)     [null, note: 'soft delete']
+}
+
+Table ChildCaregivers {
+  ChildId   uniqueidentifier [not null]
+  UserId   uniqueidentifier [not null, ref: > Users.Id]
+  Role      nvarchar(20)     [not null, note: "'owner' | 'caregiver'"]
+  AddedBy   uniqueidentifier [null, ref: > Users.Id]
+  CreatedAt datetime2(3)     [not null, default: `SYSUTCDATETIME()`]
+
+  indexes {
+    (ChildId, UserId) [pk]
+    UserId [name: 'IX_ChildCaregivers_UserId']
+  }
+  Note: 'Many-to-many: caregivers per child, children per user'
+}
+
+Table Invites {
+  Code       nvarchar(12)     [pk]
+  ChildId    uniqueidentifier [not null]
+  Role       nvarchar(20)     [not null, default: 'caregiver', note: "'owner' | 'caregiver'"]
+  CreatedBy  uniqueidentifier [not null, ref: > Users.Id]
+  CreatedAt  datetime2(3)     [not null, default: `SYSUTCDATETIME()`]
+  ExpiresAt  datetime2(3)     [not null]
+  AcceptedBy uniqueidentifier [null, ref: > Users.Id]
+  AcceptedAt datetime2(3)     [null]
+  RevokedAt  datetime2(3)     [null]
+
+  indexes {
+    ChildId [name: 'IX_Invites_ChildId']
+  }
+  Note: 'Single-use, expiring. AcceptedBy and AcceptedAt are both set or both null.'
+}
+
+Table EventTypes {
+  Name nvarchar(50) [pk, note: "seeded: 'feeding', 'diaper'"]
+}
+
+Table Events {
+  Id        uniqueidentifier [pk, default: `NEWSEQUENTIALID()`]
+  ChildId   uniqueidentifier [not null]
+  Type     nvarchar(50)     [not null, ref: > EventTypes.Name]
+  StartedAt datetime2(3)     [not null]
+  Details   nvarchar(max)    [not null, default: '{}', note: 'JSON (ISJSON check)']
+  Notes     nvarchar(500)    [null]
+  LoggedBy  uniqueidentifier [not null, ref: > Users.Id]
+  CreatedAt datetime2(3)     [not null, default: `SYSUTCDATETIME()`]
+  UpdatedAt datetime2(3)     [not null, default: `SYSUTCDATETIME()`]
+
+  indexes {
+    (ChildId, StartedAt) [name: 'IX_Events_Timeline', note: 'StartedAt DESC']
+    (ChildId, Type, StartedAt) [name: 'IX_Events_ChildType', note: 'StartedAt DESC']
+  }
+}
+
+// ON DELETE CASCADE refs (inline refs can't carry settings)
+Ref: ChildCaregivers.ChildId > Children.Id [delete: cascade]
+Ref: Invites.ChildId > Children.Id [delete: cascade]
+Ref: Events.ChildId > Children.Id [delete: cascade]

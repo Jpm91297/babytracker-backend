@@ -5,6 +5,7 @@ import { requireAuth } from '../auth/requireAuth.js';
 import { sequelize } from '../db.js';
 import { HttpError } from '../middleware/errorHandler.js';
 import { Children, ChildCaregivers, Events, Invites } from '../models/index.js';
+import { validateChildAccess } from '../middleware/validateChildAccess.js';
 
 export const childrenRouter = Router();
 
@@ -90,15 +91,20 @@ childrenRouter.post('/', requireAuth, async (req, res) => {
     res.status(201).json({ child: toChildJson(child, 'owner') });
 });
 
+// Get a Single Child
+childrenRouter.get('/:id', requireAuth, async (req, res) => {
+
+    const membership = await validateChildAccess(req.params.id, req.userId);
+
+    res.json({ child: toChildJson(membership.child, membership.Role) });
+
+});
+
 // Generate Invite Code for Child
 childrenRouter.post('/:id/invites', requireAuth, async (req, res) => {
 
-    const membership = await ChildCaregivers.findOne({
-        where: { ChildId: req.params.id, UserId: req.userId },
-        include: [{ model: Children, as: 'child', required: true }],
-    });
+    const membership = await validateChildAccess(req.params.id, req.userId);
 
-    if (!membership) throw new HttpError(404, 'Child not found');
     if (membership.Role !== 'owner') throw new HttpError(403, 'Only an owner can invite caregivers');
 
     const invite = await Invites.create({
