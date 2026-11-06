@@ -1,4 +1,5 @@
 import { Children, ChildCaregivers } from '../models/index.js';
+import { HttpError } from './errorHandler.js';
 
 
 // Validate User has access to child, returns child and users role of child
